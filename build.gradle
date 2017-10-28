@@ -19,6 +19,7 @@ sourceCompatibility = 1.8
 
 ext {
     port = "5002"
+    dockerHostname = "pet.rsobook.fri.si"
     dockerImageName = String.format("%s/%s", DOCKER_HUB_USER, project.name)
     dockerImageTag = String.format("%s:%s", dockerImageName, version)
     dockerContainerName = String.format("%s", project.name)
@@ -118,15 +119,45 @@ task dockerfileCreate(type: Dockerfile) {
     defaultCommand('/bin/bash','/usr/local/bin/kumuluzee/run.sh', 'start')
 }
 
+task containerStop(type: DockerStopContainer) {
+    group 'docker'
+    targetContainerId {
+        dockerContainerName
+    }
+    onError {
+        error -> println error.toString()
+    }
+}
+
 task dockerfileCopyScript(type: Copy){
     group 'docker'
     from "/build-dependency/run.sh"
     from "/build-dependency/config.yaml"
     into dockerfileCreate.destFile.parentFile
 }
+task containerRemove(type: DockerRemoveContainer) {
+    group 'docker'
+    dependsOn containerStop
+    targetContainerId {
+        dockerContainerName
+    }
+    onError {
+        error -> println error.toString()
+    }
+}
+
+task imageRemove(type: DockerRemoveImage) {
+    group 'docker'
+    dependsOn containerRemove
+    imageId dockerImageTag
+    onError {
+        error -> println error.toString()
+    }
+}
 
 task imageBuild(type: DockerBuildImage) {
     group 'docker'
+    dependsOn imageRemove
     dependsOn dockerfileCreate
     dependsOn dockerfileCopyScript
     dependsOn buildKumuluzEE
@@ -135,24 +166,22 @@ task imageBuild(type: DockerBuildImage) {
     //noCache = true
 }
 
-task imageRemove(type: DockerRemoveImage) {
-    group 'docker'
-    imageId dockerImageTag
-}
-
 task imagePushToDockerHub(type: DockerPushImage){
     group 'docker'
+    dependsOn imageBuild
     imageName = dockerImageTag
     tag = version
 }
 
 task containerCreate(type: DockerCreateContainer) {
     group 'docker'
+    dependsOn imageBuild
     targetImageId {
         dockerImageTag
     }
     containerName = dockerContainerName
     portBindings = [String.format("%s:%s", port, port)]
+    hostName = dockerHostname
 }
 
 task containerStart(type: DockerStartContainer) {
@@ -162,16 +191,4 @@ task containerStart(type: DockerStartContainer) {
     }
 }
 
-task containerStop(type: DockerStopContainer) {
-    group 'docker'
-    targetContainerId {
-        dockerContainerName
-    }
-}
 
-task containerRemove(type: DockerRemoveContainer) {
-    group 'docker'
-    targetContainerId {
-        dockerContainerName
-    }
-}
