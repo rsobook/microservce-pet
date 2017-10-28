@@ -110,6 +110,10 @@ task dockerfileCreate(type: Dockerfile) {
     environmentVariable("PORT", port)
     environmentVariable("JAR", buildKumuluzEE.archiveName)
     environmentVariable('DB_NAME', 'rsobook-pet')
+    environmentVariable("DB_HOST", 'rsobook-microservice-database')
+    environmentVariable("DB_PORT", '5432')
+    environmentVariable("DB_USERNAME", 'postgres')
+    environmentVariable("DB_PASSWORD", 'root')
     exposePort {
         port
     }
@@ -117,6 +121,13 @@ task dockerfileCreate(type: Dockerfile) {
     addFile("config.yaml", "/usr/local/bin/kumuluzee")
     addFile("run.sh", "/usr/local/bin/kumuluzee")
     defaultCommand('/bin/bash','/usr/local/bin/kumuluzee/run.sh', 'start')
+}
+
+task dockerfileCopyScript(type: Copy){
+    group 'docker'
+    from "/build-dependency/run.sh"
+    from "/build-dependency/config.yaml"
+    into dockerfileCreate.destFile.parentFile
 }
 
 task containerStop(type: DockerStopContainer) {
@@ -129,12 +140,6 @@ task containerStop(type: DockerStopContainer) {
     }
 }
 
-task dockerfileCopyScript(type: Copy){
-    group 'docker'
-    from "/build-dependency/run.sh"
-    from "/build-dependency/config.yaml"
-    into dockerfileCreate.destFile.parentFile
-}
 task containerRemove(type: DockerRemoveContainer) {
     group 'docker'
     dependsOn containerStop
@@ -182,6 +187,7 @@ task containerCreate(type: DockerCreateContainer) {
     containerName = dockerContainerName
     portBindings = [String.format("%s:%s", port, port)]
     hostName = dockerHostname
+    network = 'rsonetwork'
 }
 
 task containerStart(type: DockerStartContainer) {
@@ -191,4 +197,10 @@ task containerStart(type: DockerStartContainer) {
     }
 }
 
+task dockerBootstrap() {
+    group 'docker'
+    dependsOn containerCreate
+    dependsOn containerStart
+    containerCreate.finalizedBy containerStart
+}
 
