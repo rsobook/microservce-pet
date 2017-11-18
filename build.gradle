@@ -119,15 +119,13 @@ task dockerfileCreate(type: Dockerfile) {
     from 'openjdk:8-jre-alpine' //'openjdk:8-jdk'
     maintainer 'Jan Gasperlin "jg1724@student.uni-lj.si"'
 
-    environmentVariable("JAR", buildKumuluzEE.archiveName)
-
     environmentVariable("PORT", port)
     environmentVariable("KUMULUZEE_DATASOURCES0_CONNECTIONURL", 'jdbc:postgresql://ms.database:5432/rsobook-pet')
     environmentVariable("KUMULUZEE_DATASOURCES0_USERNAME", 'postgres')
     environmentVariable("KUMULUZEE_DATASOURCES0_PASSWORD", 'root')
 
-    environmentVariable("KUMULUZEE_CONFIG_ETCD_HOSTS", 'http://ms.etcd:2379')
-    environmentVariable("KUMULUZEE_DISCOVERY_ETCD_HOSTS", 'http://ms.etcd:2379')
+    environmentVariable("KUMULUZEE_CONFIG_ETCD_HOSTS", 'http://ms-etcd:2379')
+    environmentVariable("KUMULUZEE_DISCOVERY_ETCD_HOSTS", 'http://ms-etcd:2379')
 
     exposePort {
         port
@@ -198,7 +196,7 @@ task containerCreate(type: DockerCreateContainer) {
         dockerImageTag
     }
     containerName = dockerContainerName
-    portBindings = [String.format("%s:%s", port, port)]
+    portBindings = [String.format("5%s:%s", port, port)]
     hostName = dockerHostname
     network = 'rsonetwork'
 }
