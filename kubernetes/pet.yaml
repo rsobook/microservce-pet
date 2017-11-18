@@ -10,7 +10,7 @@ spec:
         app: ms-pet
     spec:
       containers:
-        - image: rsobook/ms-pet:1.0.0
+        - image: rsobook/ms-pet:2.0.0
           name: ms-pet
           env:
             - name: PORT
@@ -19,6 +19,8 @@ spec:
               value: http://ms-etcd:2379
             - name: KUMULUZEE_CONFIG_ETCD_HOSTS
               value: http://ms-etcd:2379
+            - name: KUMULUZEE_DATASOURCES0_CONNECTIONURL
+              value: jdbc:postgresql://ms-database:5432/rsobook-pet
           ports:
           - containerPort: 80
             protocol: TCP
