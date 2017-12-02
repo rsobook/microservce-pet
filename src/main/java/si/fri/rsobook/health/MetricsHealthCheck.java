@@ -1,9 +1,10 @@
-package si.fri.rsobook.rest.health;
+package si.fri.rsobook.health;
 
 import org.eclipse.microprofile.health.Health;
 import org.eclipse.microprofile.health.HealthCheck;
 import org.eclipse.microprofile.health.HealthCheckResponse;
-import si.fri.rsobook.rest.metrics.PetMetrics;
+import org.eclipse.microprofile.metrics.Counter;
+import org.eclipse.microprofile.metrics.annotation.Metric;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
@@ -13,12 +14,13 @@ import javax.inject.Inject;
 public class MetricsHealthCheck implements HealthCheck {
 
     @Inject
-    private PetMetrics userMetrics;
+    @Metric(name = "si.fri.rsobook.rest.PetResource.pets_created", absolute = true)
+    private Counter petCreatedCounter;
 
     @Override
     public HealthCheckResponse call() {
 
-        if(!userMetrics.isHealthy()){
+        if(petCreatedCounter.getCount() > -1){
             return HealthCheckResponse.named(MetricsHealthCheck.class.getSimpleName()).down().build();
         }
 
