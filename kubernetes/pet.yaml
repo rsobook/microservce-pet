@@ -13,7 +13,7 @@ spec:
         app: ms-pet
     spec:
       containers:
-        - image: rsobook/ms-pet:2.0.1
+        - image: rsobook/ms-pet:2.0.2
           name: ms-pet
           env:
             - name: PORT
